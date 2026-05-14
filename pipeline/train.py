@@ -28,3 +28,31 @@ if null_counts.sum() > 0:
     print("    Imputation complete.")
 else:
     print("    No missing values detected — no imputation needed.")
+
+
+print("\n[3] Encoding categorical features …")
+
+MONTH_ORDER = ["Feb", "Mar", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+month_encoder = OrdinalEncoder(
+    categories=[MONTH_ORDER],
+    handle_unknown="use_encoded_value",
+    unknown_value=-1,
+)
+df["Month_enc"] = month_encoder.fit_transform(df[["Month"]])
+
+visitor_encoder = LabelEncoder()
+df["VisitorType_enc"] = visitor_encoder.fit_transform(df["VisitorType"])
+
+df["Weekend_enc"] = df["Weekend"].astype(int)
+df["Revenue_enc"] = df["Revenue"].astype(int)
+
+
+FEATURE_COLS = [
+    "Administrative", "Administrative_Duration",
+    "Informational", "Informational_Duration",
+    "ProductRelated", "ProductRelated_Duration",
+    "BounceRates", "ExitRates", "PageValues", "SpecialDay",
+    "Month_enc", "OperatingSystems", "Browser",
+    "Region", "TrafficType",
+    "VisitorType_enc", "Weekend_enc",
+]
