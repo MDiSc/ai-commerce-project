@@ -56,3 +56,24 @@ FEATURE_COLS = [
     "Region", "TrafficType",
     "VisitorType_enc", "Weekend_enc",
 ]
+
+X = df[FEATURE_COLS].values
+y = df["Revenue_enc"].values
+
+print(f"    Feature matrix: {X.shape} | Class dist: {Counter(y)}")
+
+print("\n[4] Splitting data (60/20/20 stratified) …")
+
+X_trainval, X_test, y_trainval, y_test = train_test_split(
+    X, y, test_size=0.20, random_state=42, stratify=y
+)
+X_train, X_val, y_train, y_val = train_test_split(
+    X_trainval, y_trainval, test_size=0.25, random_state=42, stratify=y_trainval
+)
+print(f"    Train:{X_train.shape} | Val:{X_val.shape} | Test:{X_test.shape}")
+
+print("\n[5] Scaling with StandardScaler …")
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_val_scaled   = scaler.transform(X_val)
+X_test_scaled  = scaler.transform(X_test)
