@@ -113,3 +113,57 @@ grid_search.fit(X_train_res, y_train_res)
 print(f"\n    Best params:   {grid_search.best_params_}")
 print(f"    Best CV score: {grid_search.best_score_:.4f}")
 best_model = grid_search.best_estimator_
+
+print("\n[8] Optimising decision threshold on real-distribution val set …")
+val_probs = best_model.predict_proba(X_val_scaled)[:, 1]
+
+best_threshold = 0.5
+best_val_acc   = 0.0
+
+for thresh in np.arange(0.20, 0.71, 0.01):
+    preds = (val_probs >= thresh).astype(int)
+    acc   = accuracy_score(y_val, preds)
+    if acc > best_val_acc:
+        best_val_acc   = acc
+        best_threshold = round(thresh, 2)
+
+print(f"    Best threshold: {best_threshold} → Val Accuracy: {best_val_acc * 100:.2f}%")
+
+print("\n[9] Final evaluation on held-out test set …")
+test_probs = best_model.predict_proba(X_test_scaled)[:, 1]
+y_pred     = (test_probs >= best_threshold).astype(int)
+
+acc = accuracy_score(y_test, y_pred)
+print(f"\n    Test Accuracy (threshold={best_threshold}): {acc * 100:.2f}%")
+print("\n    Classification Report:")
+print(classification_report(y_test, y_pred, target_names=["No Purchase", "Purchase"]))
+print("    Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+if acc >= 0.90:
+    print("\n    Target accuracy ≥90% REACHED!")
+elif acc >= 0.88:
+    print("\n    Accuracy within acceptable range.")
+else:
+    print("\n    Below target.")
+
+
+print("\n[10] Saving model artifacts …")
+
+joblib.dump(best_model, os.path.join(MODEL_DIR, "mlp_model.pkl"))
+joblib.dump(scaler,     os.path.join(MODEL_DIR, "scaler.pkl"))
+
+encoders = {
+    "month_encoder":   month_encoder,
+    "visitor_encoder": visitor_encoder,
+    "feature_cols":    FEATURE_COLS,
+    "month_order":     MONTH_ORDER,
+    "threshold":       best_threshold,
+}
+joblib.dump(encoders, os.path.join(MODEL_DIR, "encoders.pkl"))
+
+print(f"    Artifacts saved to: {MODEL_DIR}")
+print(f"    Threshold: {best_threshold}")
+print("\n" + "=" * 60)
+print("Training pipeline complete.")
+print("=" * 60)
