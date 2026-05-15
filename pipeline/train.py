@@ -83,3 +83,33 @@ print(f"    Before: {Counter(y_train)}")
 smote = SMOTE(random_state=42, k_neighbors=5)
 X_train_res, y_train_res = smote.fit_resample(X_train_scaled, y_train)
 print(f"    After : {Counter(y_train_res)}")
+
+print("\n[7] Hyperparameter tuning (GradientBoostingClassifier) …")
+print("    This may take several minutes …")
+
+param_grid = {
+    "n_estimators":    [200, 300],
+    "learning_rate":   [0.05, 0.1],
+    "max_depth":       [4, 5],
+    "min_samples_leaf":[10, 20],
+    "subsample":       [0.8],
+}
+
+base_gbc = GradientBoostingClassifier(random_state=42)
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+grid_search = GridSearchCV(
+    estimator=base_gbc,
+    param_grid=param_grid,
+    cv=cv,
+    scoring="accuracy",
+    n_jobs=-1,
+    verbose=1,
+    refit=True,
+)
+grid_search.fit(X_train_res, y_train_res)
+
+print(f"\n    Best params:   {grid_search.best_params_}")
+print(f"    Best CV score: {grid_search.best_score_:.4f}")
+best_model = grid_search.best_estimator_
